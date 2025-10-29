@@ -170,18 +170,6 @@ sequenceDiagram
 <img width="1490" height="682" alt="Screenshot_4" src="https://github.com/user-attachments/assets/222ca8d1-f756-4a68-9b12-2ad26aefcf9e" />
 ---
 
-## Database Model (Simplified)
-
-```ts
-User {
-  userId: string;
-  username: string;
-  score: number;
-  updatedAt: Date;
-}
-```
-
----
 
 ## Security & Anti-Cheat
 
@@ -200,9 +188,6 @@ User {
 * Horizontal scaling using Redis Pub/Sub for WebSockets
 * Add score analytics & anomaly detection
 * Introduce worker queue for heavy processing
-
----
-
 
 ---
 
