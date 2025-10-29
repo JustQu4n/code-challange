@@ -46,6 +46,8 @@ graph TD
     R --> WS[WebSocket Service]
     WS -->|Emit update| C
 ```
+<img width="859" height="614" alt="Screenshot_1" src="https://github.com/user-attachments/assets/93a4c75d-0bf2-48b5-afa1-6f16924dba57" />
+
 ## Database
 #### User Table
 - `userId` - primary key (auto-increment)
@@ -165,20 +167,9 @@ sequenceDiagram
     WS -->> C: WebSocket score update event
 ```
 
+<img width="1490" height="682" alt="Screenshot_4" src="https://github.com/user-attachments/assets/222ca8d1-f756-4a68-9b12-2ad26aefcf9e" />
 ---
 
-## Database Model (Simplified)
-
-```ts
-User {
-  userId: string;
-  username: string;
-  score: number;
-  updatedAt: Date;
-}
-```
-
----
 
 ## Security & Anti-Cheat
 
@@ -197,9 +188,6 @@ User {
 * Horizontal scaling using Redis Pub/Sub for WebSockets
 * Add score analytics & anomaly detection
 * Introduce worker queue for heavy processing
-
----
-
 
 ---
 
