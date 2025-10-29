@@ -14,3 +14,4 @@
 <img width="1919" height="1029" alt="Screenshot_8" src="https://github.com/user-attachments/assets/63217aa6-f44e-4b53-b210-39ebcea6925f" />
 
 ## Modal confirm delete
+<img width="1914" height="1032" alt="Screenshot_9" src="https://github.com/user-attachments/assets/722051fc-f6d7-45a4-8e6d-f4d72c7f386d" />
