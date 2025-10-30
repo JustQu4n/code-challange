@@ -204,6 +204,7 @@ ws://api.example.com/scoreboard/live
 │  - Only update, rarely query         │
 └──────────────────────────────────────┘
 ```
+<img width="765" height="588" alt="image" src="https://github.com/user-attachments/assets/7b080c67-0617-4ae7-a855-1489aca18750" />
 
 **Redis Data Structure**:
 ```redis
@@ -347,80 +348,6 @@ CREATE INDEX idx_score_history_action ON score_history(action_id);
 ## Execution Flow Diagram
 
 ### Complete Flow: User Action → Score Update → Live Broadcast
-
-```
-┌──────────┐
-│  Client  │
-└────┬─────┘
-     │
-     │ 1. User completes task
-     │    Client requests action token
-     ▼
-┌─────────────┐
-│ GET /action │
-│   /token    │
-└─────┬───────┘
-      │
-      │ 2. Server generates signed token
-      │    with action metadata
-      ▼
-┌──────────┐
-│  Client  │ 3. Client submits action
-└────┬─────┘    with token
-     │
-     │ POST /score/update
-     ▼
-┌─────────────────────────────────────┐
-│         API Server                  │
-│                                     │
-│  4. Validate JWT                   │
-│  5. Verify action token signature  │
-│  6. Check rate limit               │
-│  7. Verify action_id unique        │
-└─────────────┬───────────────────────┘
-              │
-              │ 8. Begin transaction
-              ▼
-        ┌──────────┐
-        │ Database │
-        └────┬─────┘
-             │
-             │ 9. UPDATE users SET score = score + 10
-             │ 10. INSERT score_history
-             │ 11. COMMIT
-             ▼
-        ┌─────────┐
-        │  Redis  │ 12. ZADD scoreboard:top 1510 user:123
-        └────┬────┘ 13. PUBLISH "score_updated" event
-             │
-             ▼
-    ┌─────────────────┐
-    │ Redis Pub/Sub   │ 14. All API servers receive event
-    └────┬────────────┘
-         │
-         ├────────────┬────────────┬────────────┐
-         ▼            ▼            ▼            ▼
-    ┌────────┐  ┌────────┐  ┌────────┐  ┌────────┐
-    │Server 1│  │Server 2│  │Server 3│  │Server N│
-    └───┬────┘  └───┬────┘  └───┬────┘  └───┬────┘
-        │           │           │           │
-        │ 15. Fetch updated top 10 from Redis
-        │           │           │           │
-        ▼           ▼           ▼           ▼
-    ┌────────────────────────────────────────────┐
-    │     WebSocket: Broadcast to all clients    │
-    └────────────────────────────────────────────┘
-                     │
-        ┌────────────┼────────────┐
-        ▼            ▼            ▼
-    ┌────────┐  ┌────────┐  ┌────────┐
-    │Client A│  │Client B│  │Client N│
-    └────────┘  └────────┘  └────────┘
-         │            │            │
-         │ 16. Update UI with new rankings
-         └────────────┴────────────┘
-```
-
 ---
 
  ```mermaid
@@ -540,43 +467,6 @@ async function checkRateLimit(userId) {
 - **Container**: Docker
 - **Orchestration**: Kubernetes (for scaling)
 - **Monitoring**: Prometheus + Grafana
-
----
-
-## Scalability Considerations
-
-### Horizontal Scaling Strategy
-
-```
-┌─────────────────────────────────────────┐
-│      Load Balancer                      │
-│  (Sticky sessions for WebSocket)        │
-└──────────┬──────────────────────────────┘
-           │
-     ┌─────┼─────┬─────┬─────┐
-     ▼     ▼     ▼     ▼     ▼
-   [API] [API] [API] [API] [API]  ← Stateless servers
-     │     │     │     │     │
-     └─────┴─────┴─────┴─────┘
-            │
-            ▼
-    ┌──────────────┐
-    │ Redis Cluster│  ← Shared state
-    └──────────────┘
-            │
-            ▼
-    ┌──────────────┐
-    │   Database   │
-    │  (Primary +  │
-    │   Replicas)  │
-    └──────────────┘
-```
-
-**Key Points**:
-- API servers are stateless (can scale horizontally)
-- Redis handles shared state (cache + pub/sub)
-- Database uses read replicas for queries
-- Load balancer uses sticky sessions for WebSocket
 
 ---
 
