@@ -1,4 +1,18 @@
-# Real-time Scoreboard API - Architecture Design
+# Problem 6: Architecture 
+## Task
+Write the specification for a software module on the API service (backend application server).
+
+1. Create a documentation for this module on a `README.md` file.
+2. Create a diagram to illustrate the flow of execution. 
+3. Add additional comments for improvement you may have in the documentation.
+4. Your specification will be given to a backend engineering team to implement.
+   
+### Software Requirements
+1. We have a website with a score board, which shows the top 10 user’s scores.
+2. We want live update of the score board.
+3. User can do an action (which we do not need to care what the action is), completing this action will increase the user’s score.
+4. Upon completion the action will dispatch an API call to the application server to update the score.
+5. We want to prevent malicious users from increasing scores without authorisation.
 
 ## Problem Analysis
 
@@ -19,17 +33,6 @@
 ## Solution Architecture
 
 ### High-Level Overview
-
-```
-┌─────────────┐         ┌─────────────┐         ┌──────────────┐
-│   Client    │────────>│   Backend   │────────>│   Database   │
-│  (Browser)  │<────────│   API       │         │  + Cache     │
-└─────────────┘         └─────────────┘         └──────────────┘
-      │                        │
-      │                        │
-      └────WebSocket───────────┘
-         (Live Updates)
-```
 ```mermaid
 graph LR
     Client[Client<br/>Browser]
@@ -141,17 +144,13 @@ sequenceDiagram
 **Problem**: How to notify all connected users instantly?
 
 **Solution**: WebSocket for push + Redis Pub/Sub for coordination
-
-```
-┌─────────────────────────────────────────────┐
-│          When Score Updates:                │
-│                                             │
-│  1. User A completes action                │
-│  2. API updates database                   │
-│  3. API publishes to Redis: "score_updated"│
-│  4. All API servers receive the message    │
-│  5. Each server pushes to connected clients│
-└─────────────────────────────────────────────┘
+                                                       
+    When Score Updates:
+    1. User A completes action                
+    2. API updates database                   
+    3. API publishes to Redis: "score_updated"
+    4. All API servers receive the message    
+    5. Each server pushes to connected clients
 ```
 
 **WebSocket Implementation**:
@@ -184,26 +183,6 @@ ws://api.example.com/scoreboard/live
 **Problem**: Querying database for top 10 on every request is slow.
 
 **Solution**: Multi-level caching
-
-```
-┌──────────────────────────────────────┐
-│  Cache Layer 1: Redis Sorted Set    │
-│  - Store top 100 users               │
-│  - Update on score change            │
-│  - Query time: O(log N)              │
-└──────────────────────────────────────┘
-         ↓
-┌──────────────────────────────────────┐
-│  Cache Layer 2: In-Memory Cache      │
-│  - Cache API response for 1 second   │
-│  - Serve thousands of requests       │
-└──────────────────────────────────────┘
-         ↓
-┌──────────────────────────────────────┐
-│  Database: Source of Truth           │
-│  - Only update, rarely query         │
-└──────────────────────────────────────┘
-```
 <img width="765" height="588" alt="image" src="https://github.com/user-attachments/assets/7b080c67-0617-4ae7-a855-1489aca18750" />
 
 **Redis Data Structure**:
@@ -443,43 +422,14 @@ async function checkRateLimit(userId) {
 ## Technology Stack Recommendations
 
 ### Backend
-- **Language**: Node.js (TypeScript) or Go
-- **Framework**: Express.js / Fastify (Node) or Gin (Go)
+- **Language**: Node.js (TypeScript)
+- **Framework**: Express.js 
 - **Database**: PostgreSQL (reliable, ACID compliant)
 - **Cache**: Redis (sorted sets + pub/sub)
 - **WebSocket**: Socket.io or native ws library
 
-### Infrastructure
-- **Load Balancer**: Nginx / AWS ALB
-- **Container**: Docker
-- **Orchestration**: Kubernetes (for scaling)
-- **Monitoring**: Prometheus + Grafana
-
 ---
 
-## Testing Strategy
-
-### 1. Unit Tests
-- Score calculation logic
-- Token signing/verification
-- Rate limiter logic
-
-### 2. Integration Tests
-- Complete flow: action → update → broadcast
-- Database transaction rollback
-- Cache invalidation
-
-### 3. Load Tests
-- 1000 concurrent users
-- 100 score updates/second
-- WebSocket connection stress test
-
-### 4. Security Tests
-- Try to replay old action tokens
-- Attempt rate limit bypass
-- SQL injection tests
-
----
 
 ## Potential Issues & Solutions
 
@@ -538,11 +488,3 @@ async function checkRateLimit(userId) {
 3. **Redis Sorted Sets** - O(log N) ranking queries
 4. **WebSocket** - Push updates instead of polling
 5. **Idempotency** - Each action can only succeed once
-
-### Implementation Priority
-1. **Phase 1**: Basic API + Security (Week 1-2)
-2. **Phase 2**: Caching + Performance (Week 3)
-3. **Phase 3**: WebSocket + Real-time (Week 4)
-4. **Phase 4**: Monitoring + Testing (Week 5)
-
-This design balances security, performance, and scalability while remaining practical to implement.
