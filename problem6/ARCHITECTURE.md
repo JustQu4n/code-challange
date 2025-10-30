@@ -17,22 +17,16 @@ Write the specification for a software module on the API service (backend applic
 ## Problem Analysis
 
 ### Requirements
-1. ✅ Display top 10 users on scoreboard
-2. ✅ Live updates when scores change
-3. ✅ Users perform actions → API call → update score
-4. ✅ Prevent malicious score manipulation
-
-### Key Challenges
-- **Security**: How to prevent users from faking scores?
-- **Real-time**: How to push updates to all clients instantly?
-- **Performance**: How to handle many concurrent updates?
-- **Data Consistency**: How to ensure accurate rankings?
+1.  Display top 10 users on scoreboard
+2.  Live updates when scores change
+3.  Users perform actions → API call → update score
+4.  Prevent malicious score manipulation
 
 ---
 
 ## Solution Architecture
 
-### High-Level Overview
+### Overview
 ```mermaid
 graph LR
     Client[Client<br/>Browser]
@@ -53,7 +47,7 @@ graph LR
 
 ## Core Design Ideas
 
-### 1. Security Strategy: Server-Side Validation
+### 1. Security: Server-Side Validation
 
 **Problem**: Users can manipulate client-side code and send fake scores.
 
@@ -424,9 +418,9 @@ async function checkRateLimit(userId) {
 ### Backend
 - **Language**: Node.js (TypeScript)
 - **Framework**: Express.js 
-- **Database**: PostgreSQL (reliable, ACID compliant)
-- **Cache**: Redis (sorted sets + pub/sub)
-- **WebSocket**: Socket.io or native ws library
+- **Database**: PostgreSQL 
+- **Cache**: Redis
+- **WebSocket**: Socket.io 
 
 ---
 
@@ -444,10 +438,6 @@ async function checkRateLimit(userId) {
 ### Issue 3: Cache Inconsistency
 **Problem**: Redis cache out of sync with database
 **Solution**: Use write-through cache pattern, database is source of truth
-
-### Issue 4: Thundering Herd
-**Problem**: Cache expires, 1000 requests hit database
-**Solution**: Use cache warming + stale-while-revalidate pattern
 
 ---
 
@@ -472,19 +462,3 @@ async function checkRateLimit(userId) {
 4. **CQRS**: Separate read/write models
 
 ---
-
-## Summary
-
-### Architecture Highlights
-✅ **Secure**: Multi-layer validation, server-side scoring
-✅ **Real-time**: WebSocket + Redis Pub/Sub
-✅ **Scalable**: Stateless servers, horizontal scaling
-✅ **Performant**: Multi-level caching strategy
-✅ **Reliable**: ACID transactions, audit trail
-
-### Key Design Decisions
-1. **Never trust client** - All score calculations on server
-2. **Action tokens** - Cryptographically signed proofs
-3. **Redis Sorted Sets** - O(log N) ranking queries
-4. **WebSocket** - Push updates instead of polling
-5. **Idempotency** - Each action can only succeed once
