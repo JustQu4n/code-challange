@@ -351,55 +351,42 @@ CREATE INDEX idx_score_history_action ON score_history(action_id);
 ---
 
  ```mermaid
- sequenceDiagram
-    participant Client
-    participant API as API Server
-    participant DB as Database
-    participant Redis
-    participant WS as WebSocket
-
-    Note over Client: User completes task
-    Client->>API: 1. GET /action/token<br/>Request action token
+ flowchart TD
+    Start([User performs action]) --> RequestToken[Client requests action token<br/>GET /api/action/start]
     
-    Note over API: 2. Generate signed token<br/>with action metadata
-    API-->>Client: Return: {action_id, token}
+    RequestToken --> GenerateToken[Server generates signed token<br/>HMAC signature]
     
-    Client->>API: 3. POST /score/update<br/>{action_id, action_type, token}
+    GenerateToken --> ReturnToken[Return action_id + token<br/>to client]
     
-    rect rgb(255, 245, 235)
-        Note over API: Validation Layer
-        Note over API: 4. Validate JWT
-        Note over API: 5. Verify action token signature
-        Note over API: 6. Check rate limit
-        Note over API: 7. Verify action_id unique
-    end
+    ReturnToken --> SubmitAction["Client submits action<br/>POST /api/score/update<br/>(action_id, action_type, token)"]
     
-    rect rgb(235, 245, 255)
-        Note over API,DB: Database Transaction
-        API->>DB: 8. BEGIN TRANSACTION
-        API->>DB: 9. UPDATE users<br/>SET score = score + 10
-        API->>DB: 10. INSERT score_history
-        API->>DB: 11. COMMIT
-        DB-->>API: Success
-    end
+    SubmitAction --> Validate{Validation<br/>Layers}
     
-    rect rgb(240, 255, 240)
-        Note over API,Redis: Cache & Event
-        API->>Redis: 12. ZADD scoreboard:top<br/>1510 user:123
-        API->>Redis: 13. PUBLISH "score_updated"
-    end
+    Validate -->|Failed| Reject([❌ Reject Request])
     
-    API-->>Client: Response: {new_score, rank}
+    Validate -->|Passed| CalcScore[Server calculates<br/>score_delta based on<br/>action_type]
     
-    rect rgb(255, 240, 245)
-        Note over Redis,WS: Broadcast Update
-        Redis->>API: 14. Event received
-        Note over API: 15. Fetch updated top 10<br/>from Redis
-        API->>WS: 16. Send via WebSocket
-        WS->>Client: Broadcast new scoreboard
-    end
+    CalcScore --> Transaction[Database Transaction:<br/>1. UPDATE users score<br/>2. INSERT score_history<br/>3. COMMIT]
     
-    Note over Client: 17. Update UI<br/>with new rankings
+    Transaction --> UpdateCache[Update Redis Cache:<br/>ZADD scoreboard:top]
+    
+    UpdateCache --> Publish[Publish Event:<br/>PUBLISH score_updated]
+    
+    Publish --> Response[Return Response:<br/>new_score, rank]
+    
+    Publish --> Broadcast[Broadcast via WebSocket<br/>to all connected clients]
+    
+    Broadcast --> UpdateUI([Clients update UI<br/>with new scoreboard])
+    
+    Response --> End([✅ Complete])
+    UpdateUI --> End
+    
+    style Start fill:#e3f2fd
+    style Validate fill:#fff3e0
+    style Transaction fill:#f3e5f5
+    style Broadcast fill:#e8f5e9
+    style End fill:#c8e6c9
+    style Reject fill:#ffcdd2
  ```
 ## Security Implementation
 
