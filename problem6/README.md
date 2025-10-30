@@ -164,7 +164,7 @@ sequenceDiagram
     API ->> DB: Query Top 10
     DB -->> API: Top 10 list
     API ->> WS: Publish scoreboard update
-    WS -->> C: WebSocket score update event
+    WS -->> U: WebSocket score update event
 ```
 
 <img width="1490" height="682" alt="Screenshot_4" src="https://github.com/user-attachments/assets/222ca8d1-f756-4a68-9b12-2ad26aefcf9e" />
