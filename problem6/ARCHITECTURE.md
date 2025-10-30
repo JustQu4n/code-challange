@@ -327,7 +327,7 @@ CREATE INDEX idx_score_history_action ON score_history(action_id);
  flowchart TD
     Start([User performs action]) --> RequestToken[Client requests action token<br/>GET /api/action/start]
     
-    RequestToken --> GenerateToken[Server generates signed token<br/>HMAC signature]
+    RequestToken --> GenerateToken[Server generates signed token]
     
     GenerateToken --> ReturnToken[Return action_id + token<br/>to client]
     
@@ -443,7 +443,7 @@ async function checkRateLimit(userId) {
 
 ## Future Improvements
 
-### Phase 2 Features
+### Features
 1. **Regional Leaderboards**: Separate rankings by country/region
 2. **Time-based Boards**: Daily, weekly, monthly rankings
 3. **Achievement System**: Badges for milestones
@@ -452,12 +452,10 @@ async function checkRateLimit(userId) {
 ### Advanced Security
 1. **Machine Learning**: Detect abnormal patterns
 2. **Device Fingerprinting**: Detect multi-accounting
-3. **CAPTCHA**: For suspicious activities
 4. **2FA**: For high-value actions
 
 ### Performance Enhancements
 1. **GraphQL Subscriptions**: Alternative to WebSocket
-2. **Edge Caching**: CDN for read-heavy data
 3. **Event Sourcing**: Store all events for audit
 4. **CQRS**: Separate read/write models
 
