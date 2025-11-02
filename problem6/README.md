@@ -37,7 +37,7 @@ graph LR
     Backend -->|HTTP Response| Client
     Backend -->|Query/Update| Database
     
-    Client -.->|WebSocket<br/>Live Updates| Backend
+    Backend -.->|WebSocket<br/>Live Updates| Client
     
     style Client fill:#e3f2fd
     style Backend fill:#fff3e0
